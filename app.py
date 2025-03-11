@@ -2,9 +2,20 @@ from flask import Flask, render_template, request, jsonify
 import re
 from datetime import datetime
 import pickle,os,csv
+import subprocess
 #import pymysql as mysql
 
 app = Flask(__name__)
+
+def push_to_github():
+    try:
+        subprocess.run(["git", "add", "templates/hisab.csv"], check=True)
+        subprocess.run(["git", "commit", "-m", "Auto-update hisab.csv"], check=True)
+        subprocess.run(["git", "push", "origin", "main"], check=True)
+        print("CSV file successfully pushed to GitHub!")
+    except Exception as e:
+        print("Error while pushing to GitHub:", e)
+
 
 def convert_hindi_words_to_numbers(text):
     """
@@ -47,6 +58,7 @@ def update(R, amt2):
 
     os.remove("templates/hisab.csv")
     os.rename("templates/temp.csv", "templates/hisab.csv")
+    push_to_github()
 
 def extract_data(text):
     """
@@ -114,6 +126,7 @@ def extract_data(text):
             csvw=csv.writer(f)
             csvw.writerow([date,shift,amount])
             f.close()
+            push_to_github()
                 
 
     return date, shift, amount
@@ -128,8 +141,7 @@ def select_month():
         selected_month = request.form['month']
         if len(selected_month) == 1:
             selected_month = "0" + selected_month
-        fr=open("templates/hisab.csv","a+",newline="\r\n")
-        fr.seek(0)
+        fr=open("templates/hisab.csv","r+",newline="\r\n")
         read=csv.reader(fr)
         for r in read:
             if len(r)<2:
