@@ -3,9 +3,45 @@ import re
 from datetime import datetime
 import pickle,os,csv
 import subprocess
+import requests
+import json
 #import pymysql as mysql
 
 app = Flask(__name__)
+
+GITHUB_TOKEN = "your_github_personal_access_token"
+REPO_OWNER = "3-Sanins"
+REPO_NAME = "milk_hisab2"
+FILE_PATH = "templates/hisab.csv"
+BRANCH = "main"
+
+def update_csv_on_github():
+    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{FILE_PATH}"
+
+    # Get current file SHA
+    headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+    response = requests.get(url, headers=headers)
+    file_data = response.json()
+    sha = file_data.get("sha")
+
+    # Read the new file content
+    with open(FILE_PATH, "r") as f:
+        content = f.read()
+
+    # Prepare the request payload
+    payload = {
+        "message": "Auto-update hisab.csv",
+        "content": content.encode("utf-8").decode("latin1"),  # Encode properly
+        "sha": sha,
+        "branch": BRANCH
+    }
+
+    # Push the file update
+    response = requests.put(url, headers=headers, data=json.dumps(payload))
+    print(response.json())
+
+
+
 
 def push_to_github():
     try:
@@ -58,7 +94,7 @@ def update(R, amt2):
 
     os.remove("templates/hisab.csv")
     os.rename("templates/temp.csv", "templates/hisab.csv")
-    push_to_github()
+    update_csv_on_github()
 
 def extract_data(text):
     """
@@ -126,7 +162,7 @@ def extract_data(text):
             csvw=csv.writer(f)
             csvw.writerow([date,shift,amount])
             f.close()
-            push_to_github()
+            update_csv_on_github()
                 
 
     return date, shift, amount
