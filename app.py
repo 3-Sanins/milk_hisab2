@@ -9,7 +9,7 @@ import json
 
 app = Flask(__name__)
 
-GITHUB_TOKEN = "your_github_personal_access_token"
+GITHUB_TOKEN = "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"
 REPO_OWNER = "3-Sanins"
 REPO_NAME = "milk_hisab2"
 FILE_PATH = "templates/hisab.csv"
